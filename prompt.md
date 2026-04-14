@@ -1,4 +1,4 @@
-# JARVIS — Intelligent Local Assistant
+# CORTEX — Intelligent Local Assistant
 ### Master Project Specification — v2.0
 > **This file is the single source of truth for the entire project.**
 > Every AI coding agent, every developer, every session starts by reading this file in full.
@@ -23,7 +23,7 @@ This document is the **initialization prompt** for any AI coding assistant (Code
 
 ## 1. PROJECT OVERVIEW
 
-**Name:** JARVIS (Just A Rather Very Intelligent System)
+**Name:** CORTEX
 **Type:** Local-first, offline-capable, conversational AI assistant
 **Primary interface:** CLI (MVP) and Web UI (Phase 2)
 **Secondary interface:** Amazon Alexa Custom Skill (optional adapter, Phase 3)
@@ -37,7 +37,7 @@ Build a conversational AI assistant that runs entirely on a local PC, understand
 
 ### Core Problem
 
-Existing assistants (Alexa, Google Assistant) are cloud-dependent, command-based, and stateless. They cannot hold context across a conversation, reason about complex requests, or execute flexible personal automations privately. JARVIS replaces that intelligence with a fully local, privacy-preserving system that runs on commodity hardware.
+Existing assistants (Alexa, Google Assistant) are cloud-dependent, command-based, and stateless. They cannot hold context across a conversation, reason about complex requests, or execute flexible personal automations privately. CORTEX replaces that intelligence with a fully local, privacy-preserving system that runs on commodity hardware.
 
 ---
 
@@ -81,32 +81,34 @@ These rules govern every task, every commit, every decision. They cannot be over
 
 ### 4.1 Layer Map
 
+```text
++-------------------------------------------------------------+
+|                        INTERFACE LAYER                      |
+|  CLI Adapter | Web UI Adapter | Alexa Adapter (optional)    |
+|  All adapters normalize to InputMessage                     |
++-------------------------------+-----------------------------+
+                                |
+                                v
++-------------------------------------------------------------+
+|                      ORCHESTRATOR LAYER                     |
+|  8-step processing pipeline                                 |
+|  Owns routing, intent resolution, confirmation state        |
++-------------------+-----------------------+-----------------+
+                    |                       |
+                    v                       v
+          +------------------+   +---------------------------+
+          |    LLM LAYER     |   |        TOOLS LAYER        |
+          |  client/adapters |   | registry + tool contracts |
+          +--------+---------+   +-------------+-------------+
+                   |                           |
+                   +-------------+-------------+
+                                 v
+                     +-------------------------+
+                     |      MEMORY LAYER       |
+                     | session + persistence   |
+                     +-------------------------+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      INTERFACE LAYER                         │
-│   CLI Adapter │ Web UI Adapter │ Alexa Adapter (optional)    │
-│   All adapters normalize input to: InputMessage schema       │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ InputMessage
-┌──────────────────────────────▼──────────────────────────────┐
-│                    ORCHESTRATOR LAYER                        │
-│  8-step processing pipeline (see Section 5)                  │
-│  Owns: session routing, intent resolution, confirmation state│
-└──────────┬───────────────────────────┬───────────────────────┘
-           │                           │
-┌──────────▼────────┐    ┌─────────────▼──────────────────────┐
-│    LLM LAYER      │    │           TOOLS LAYER               │
-│  client.py        │    │  Tool Registry                      │
-│  Model-agnostic   │    │  BaseTool interface                 │
-│  Ollama adapter   │    │  recipes │ shopping │ finance │ etc  │
-└──────────┬────────┘    └─────────────┬──────────────────────┘
-           │                           │
-┌──────────▼───────────────────────────▼──────────────────────┐
-│                      MEMORY LAYER                            │
-│  SessionMemory (in-memory, per session)                      │
-│  PersistentMemory (SQLite, optional in MVP)                  │
-└─────────────────────────────────────────────────────────────┘
-```
+
 
 ### 4.2 Unified Input Schema
 
@@ -143,65 +145,51 @@ Every user input passes through this exact pipeline. No shortcuts, no bypasses.
 
 ```
 INPUT (InputMessage)
-  │
-  ▼
+  |
+  v
 Step 1: INPUT NORMALIZATION
-  │  Strip whitespace, normalize encoding
-  │  Validate InputMessage schema
-  │
-  ▼
+  - Strip whitespace, normalize encoding
+  - Validate InputMessage schema
+
 Step 2: CONTEXT INJECTION
-  │  Load session from SessionMemory by session_id
-  │  If no session → create new session
-  │  Check for pending_confirmation state
-  │  If pending → route to confirmation resolution (Step 6 shortcut)
-  │
-  ▼
+  - Load/create session by session_id
+  - Check pending_confirmation
+  - If pending, route to confirmation resolution
+
 Step 3: INTENT CLASSIFICATION
-  │  Run rule-based classifier (fast, deterministic)
-  │  If confidence >= 0.85 → use result
-  │  Else → LLM fallback classifier (returns structured JSON)
-  │  Output: IntentResult { intent, confidence, source, raw_input }
-  │
-  ▼
+  - Rule-based classifier first
+  - If confidence < 0.85, use LLM structured fallback
+  - Output: IntentResult { intent, confidence, source, raw_input }
+
 Step 4: ENTITY / PARAMETER EXTRACTION
-  │  Rule-based extraction for known patterns (numbers, lists, names)
-  │  If complex/ambiguous → LLM extraction (returns structured JSON)
-  │  Merge with collected_params from session (multi-turn accumulation)
-  │  Output: dict of extracted params
-  │
-  ▼
-Step 5: DECISION LAYER (Orchestrator — not LLM)
-  │  A) Tool found + all params present → Step 6 (confirm) or Step 7 (execute)
-  │  B) Tool found + missing params → re-prompt user, update collected_params
-  │  C) No tool matched → route to LLM general response (Step 7)
-  │  D) New EXECUTABLE while confirmation pending → ask user to resolve first
-  │
-  ▼
+  - Rule-based extraction for known patterns
+  - LLM extraction only for ambiguous/complex inputs
+  - Merge with collected_params
+
+Step 5: DECISION LAYER (Orchestrator, not LLM)
+  - Tool + params complete -> confirm/execute
+  - Tool + missing params -> re-prompt
+  - No tool -> LLM general response
+  - New executable while confirmation pending -> resolve pending first
+
 Step 6: CONFIRMATION HANDLING
-  │  If tool.action_class == EXECUTABLE and NOT yet confirmed:
-  │    Generate confirmation prompt
-  │    Save pending_confirmation to session memory
-  │    Return OutputMessage(status="needs_confirmation") — STOP, wait for user
-  │  If already confirmed (yes/no resolved in Step 2):
-  │    If yes → proceed to Step 7
-  │    If no  → clear confirmation state, return cancellation message — STOP
-  │
-  ▼
+  - EXECUTABLE without confirmation -> create pending_confirmation and return needs_confirmation
+  - Confirmed yes -> execute
+  - Confirmed no -> cancel and clear state
+
 Step 7: EXECUTION
-  │  Tool path:    tool.run(params, context) → ToolResponse
-  │  LLM path:     llm.chat(messages, system_prompt) → str
-  │  Catch all exceptions → wrap in ErrorResponse
-  │
-  ▼
+  - Tool path: tool.run(params, context) -> ToolResponse
+  - LLM path: llm.chat(messages, system_prompt) -> str
+  - Exceptions wrapped into safe error response
+
 Step 8: RESPONSE FORMATTING
-  │  Format OutputMessage for target interface
-  │  Update SessionMemory (append turn to history, clear confirmation state)
-  │  Log session_updated event
-  │  Return OutputMessage
+  - Build OutputMessage
+  - Update session history/state
+  - Emit session_updated event
 
 OUTPUT (OutputMessage)
 ```
+
 
 ### Orchestrator Decision Rules (Step 5, detailed)
 
@@ -294,7 +282,7 @@ registry.register(ShoppingListTool())
 ### 7.3 Prompt Structure
 
 Every LLM call uses a system prompt containing:
-1. Role definition ("You are JARVIS, a helpful local assistant...")
+1. Role definition ("You are CORTEX, a helpful local assistant...")
 2. Output format instruction (JSON schema when structured output needed)
 3. Available tools summary (`registry.get_descriptions()`)
 4. Current date/time
@@ -513,31 +501,32 @@ Phase 4+ — Hardware and automations:
 
 ## 14. REQUIRED PROJECT STRUCTURE
 
-```
+```text
 cortex/
-├── AGENTS.md
-├── prompt.md
-├── docs/
-│   ├── architecture.md
-│   ├── checkpoint.md
-│   └── currentTask.md
-├── src/
-│   ├── main.py
-│   ├── schemas.py
-│   ├── orchestrator/
-│   ├── tools/
-│   ├── llm/
-│   ├── memory/
-│   └── interface/
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── conversation/
-├── .env.example
-├── .gitignore
-├── requirements.txt
-└── README.md
+|- AGENTS.md
+|- prompt.md
+|- docs/
+|  |- architecture.md
+|  |- checkpoint.md
+|  `- currentTask.md
+|- src/
+|  |- main.py
+|  |- schemas.py
+|  |- orchestrator/
+|  |- tools/
+|  |- llm/
+|  |- memory/
+|  `- interface/
+|- tests/
+|  |- unit/
+|  |- integration/
+|  `- conversation/
+|- .env.example
+|- .gitignore
+|- requirements.txt
+`- README.md
 ```
+
 
 ---
 
@@ -586,7 +575,7 @@ Confirmation cancel flow:
 
 ## 17. OPEN DECISIONS
 
-- Persistent memory: SQLite in Phase 2 or Phase 1.5?
+- Persistent memory: SQLite in Phase 2 or Phase 1.5
 - Web UI stack: minimal HTML vs lightweight frontend framework
 - Structured logging library choice
 
@@ -623,14 +612,15 @@ Exactly one active task. Replaced after each task completion.
 
 ### 20.1 Branch Strategy
 
+```text
+main              <- stable only; merged from dev at phase milestones
+`- dev            <- integration branch; receives PRs from task branches
+   |- task/T01-project-setup
+   |- task/T02-llm-abstraction
+   |- fix/confirmation-state
+   `- docs/architecture-updates
 ```
-main              ← stable only; merged from dev at Phase milestone
-  └── dev         ← integration branch; receives PRs from task branches
-        ├── task/T01-project-setup
-        ├── task/T02-llm-abstraction
-        ├── fix/confirmation-state
-        └── docs/architecture-updates
-```
+
 
 ### 20.2 Commit Message Format (Conventional Commits — enforced)
 

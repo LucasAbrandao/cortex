@@ -1,26 +1,26 @@
-# Current Task - T10: Error and Observability Hardening
+# Current Task - T12: Pipeline Validation and Functional Flow Hardening
 
 ## Status
 [ ] Not started
 
 ## Goal
-Harden orchestrator runtime behavior so error responses and runtime events consistently follow the architecture contracts.
+Validate and harden the complete MVP pipeline for the first fully reliable functional flow (recipes + shopping list + confirmation) without introducing new business domains.
 
 ---
 
 ## Scope (In)
-- Enforce orchestrator error output alignment with the shared error contract (`status=error`, `error_code`, `message`, `recoverable`)
-- Add deterministic handling for tool/LLM runtime exceptions so user-facing responses are safe and consistent
-- Add structured runtime event logging for core orchestrator pipeline events
-- Add unit/integration coverage proving error wrapping and event emission paths
+- Validate end-to-end orchestrator behavior for MVP scripted flows
+- Strengthen deterministic handling for parameter carry-over and confirmation continuity
+- Expand/adjust tests where needed to prove stable behavior across CLI and web adapter paths
+- Ensure no regressions in existing MVP behavior
 
 ## Scope (Out)
-- New tool business features
-- Confirmation model redesign
-- Persistence implementation
-- Alexa work
+- New business features or tools
+- Architecture refactor or import restructuring
+- Persistent storage implementation
+- Alexa integration
 - Finance/automation domains
-- Frontend redesign
+- UI redesign
 
 ---
 
@@ -30,18 +30,21 @@ Harden orchestrator runtime behavior so error responses and runtime events consi
 src/orchestrator/pipeline.py
 tests/unit/test_pipeline.py
 tests/integration/test_orchestrator_pipeline.py
+tests/conversation/test_mvp_conversation_scripts.py
+tests/integration/test_cli_smoke.py
+tests/integration/test_web_smoke.py
 ```
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Tool and LLM execution failures are converted into safe `OutputMessage(status="error")` responses
-- [ ] Error responses include contract-aligned error data (`error_code`, `message`, `recoverable`)
-- [ ] Required runtime events are emitted for the main orchestrator flow (minimum: input received, intent resolved, confirmation requested/resolved, tool executed, error raised, session updated)
-- [ ] New unit tests cover deterministic error and logging behaviors
-- [ ] Integration tests validate at least one end-to-end error path through the pipeline
-- [ ] Existing unit/integration/conversation/web smoke tests do not regress
+- [ ] Recipe -> follow-up -> shopping executable flow remains deterministic and reproducible
+- [ ] Confirmation pending state is preserved and resolved correctly across turns
+- [ ] Multi-turn parameter accumulation remains correct for MVP tools
+- [ ] CLI and web integration paths produce equivalent flow outcomes
+- [ ] New or adjusted unit/integration coverage proves hardened behavior
+- [ ] Existing test suites do not regress
 - [ ] `python -m pytest` passes
 
 ---
@@ -51,6 +54,7 @@ tests/integration/test_orchestrator_pipeline.py
 ```powershell
 python -m pytest tests/unit
 python -m pytest tests/integration
+python -m pytest tests/conversation
 python -m pytest
 ```
 
@@ -59,5 +63,5 @@ python -m pytest
 ## Commit Message
 
 ```text
-task(T10): harden orchestrator error contract and observability events
+task(T12): harden end-to-end mvp pipeline validation flows
 ```

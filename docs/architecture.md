@@ -1,7 +1,7 @@
-# Architecture — JARVIS
+# Architecture — CORTEX
 
 ## System overview
-JARVIS is a local-first conversational assistant running on a Windows PC. The MVP interface is CLI.
+CORTEX is a local-first conversational assistant running on a Windows PC. The MVP interface is CLI.
 The system is layered to keep business logic deterministic and testable while using an LLM only for interpretation and natural language output.
 
 ## Layer definitions
@@ -145,8 +145,8 @@ No raw tracebacks to the user. Log tracebacks locally.
 
 ## Open decisions
 
-| Decision | Options | Blocking? | Notes |
+| Decision | Options | Blocking | Notes |
 |---|---|---|---|
-| Persistent storage (MVP?) | none vs SQLite | Not blocking | defer to Phase 2 |
+| Persistent storage (MVP) | none vs SQLite | Not blocking | defer to Phase 2 |
 | Logging library | stdlib logging vs structlog | Not blocking | start with stdlib |
 | Web UI stack | minimal HTML vs lightweight JS framework | Not blocking | Phase 2 decision |

@@ -1,1 +1,2 @@
-"""Tooling package for JARVIS."""
+"""Tooling package for CORTEX."""
+

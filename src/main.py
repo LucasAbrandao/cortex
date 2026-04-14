@@ -20,6 +20,8 @@ from src.tools.recipe_tool import RecipeTool
 from src.tools.registry import ToolRegistry
 from src.tools.shopping_list_tool import ShoppingListTool
 
+APP_NAME = (os.getenv("APP_NAME", "CORTEX") or "CORTEX").strip()
+
 
 def load_environment() -> Path | None:
     """Load `.env` when present, otherwise fall back to `.env.example`."""
@@ -35,8 +37,8 @@ def load_environment() -> Path | None:
 def create_app(orchestrator: OrchestratorPipeline) -> FastAPI:
     """Create the FastAPI app and wire the web adapter to the orchestrator."""
 
-    app = FastAPI(title="JARVIS", version="0.1.0")
-    attach_web_routes(app, orchestrator)
+    app = FastAPI(title=APP_NAME, version="0.1.0")
+    attach_web_routes(app, orchestrator, assistant_name=APP_NAME)
     return app
 
 
@@ -73,13 +75,15 @@ def build_orchestrator() -> OrchestratorPipeline:
 
 
 load_environment()
+APP_NAME = (os.getenv("APP_NAME", APP_NAME) or "CORTEX").strip()
 orchestrator = build_orchestrator()
 app = create_app(orchestrator)
 
 
 def main() -> None:
-    run_cli(orchestrator=orchestrator)
+    run_cli(orchestrator=orchestrator, assistant_name=APP_NAME)
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from src.llm.adapters import MockLLMClient
 from src.memory.session import SessionMemoryStore
