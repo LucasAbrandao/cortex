@@ -9,6 +9,7 @@ EXIT_COMMANDS = {"exit", "quit"}
 def run_cli(
     orchestrator: OrchestratorPipeline,
     session_id: str = "cli-session",
+    assistant_name: str = "CORTEX",
 ) -> OutputMessage | None:
     """Run the CLI adapter loop backed by the orchestrator pipeline."""
 
@@ -32,10 +33,11 @@ def run_cli(
             interface="cli",
         )
         response = orchestrator.process(message)
-        print(f"JARVIS: {response.text}")
+        print(f"{assistant_name}: {response.text}")
         last_response = response
 
         if response.end_session:
             break
 
     return last_response
+

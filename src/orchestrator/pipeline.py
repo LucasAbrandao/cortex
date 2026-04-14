@@ -397,7 +397,7 @@ class OrchestratorPipeline:
 
     def _build_system_prompt(self, session: SessionState) -> str:
         _ = session
-        return "You are JARVIS. Return structured data when requested."
+        return "You are CORTEX. Return structured data when requested."
 
     def _match_tool_name(self, text: str) -> ToolLike | None:
         lowered_text = self._normalize_text(text)

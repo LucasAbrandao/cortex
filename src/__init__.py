@@ -1,1 +1,2 @@
-"""JARVIS source package."""
+"""CORTEX source package."""
+

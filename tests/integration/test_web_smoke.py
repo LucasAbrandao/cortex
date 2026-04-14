@@ -27,7 +27,7 @@ def _build_web_app() -> tuple[FastAPI, OrchestratorPipeline]:
         session_store=SessionMemoryStore(),
         confirmation_id_factory=lambda: "confirm-web-smoke",
     )
-    app = FastAPI(title="JARVIS Test Web", version="0.1.0")
+    app = FastAPI(title="CORTEX Test Web", version="0.1.0")
     attach_web_routes(app, pipeline, session_id="web-smoke-session")
     return app, pipeline
 
@@ -140,3 +140,4 @@ def test_web_post_chat_preserves_session_for_confirmation_flow() -> None:
     assert session is not None
     assert session.pending_confirmation is None
     assert session.turn_count == 4
+

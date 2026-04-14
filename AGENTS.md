@@ -1,4 +1,4 @@
-# AGENTS.md — JARVIS (Spec-Driven Development Rules)
+# AGENTS.md — CORTEX (Spec-Driven Development Rules)
 
 You are an engineering agent working in a repo that uses strict Spec-Driven Development (SDD).
 Your job is to implement *only* what the active spec requires, keep docs consistent, and prove changes with tests.

@@ -17,5 +17,6 @@ def test_cli_smoke() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert "JARVIS: Please confirm: shopping_list_tool with {'item': 'milk'}" in result.stdout
-    assert "JARVIS: Added 'milk' to your shopping list." in result.stdout
+    assert "CORTEX: Please confirm: shopping_list_tool with {'item': 'milk'}" in result.stdout
+    assert "CORTEX: Added 'milk' to your shopping list." in result.stdout
+

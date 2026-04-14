@@ -1,6 +1,6 @@
-# JARVIS
+# CORTEX
 
-JARVIS (Just A Rather Very Intelligent System) is a local-first conversational assistant built with strict Spec-Driven Development (SDD). The current MVP state includes deterministic orchestrator flows, recipe and shopping-list tools, confirmation handling, a CLI runtime, and a FastAPI web scaffold.
+CORTEX is a local-first conversational assistant built with strict Spec-Driven Development (SDD). The current MVP state includes deterministic orchestrator flows, recipe and shopping-list tools, confirmation handling, a CLI runtime, and a FastAPI web scaffold.
 
 ## Interfaces
 

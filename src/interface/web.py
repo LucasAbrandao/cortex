@@ -15,12 +15,13 @@ def attach_web_routes(
     orchestrator: OrchestratorPipeline,
     *,
     session_id: str = "web-session",
+    assistant_name: str = "CORTEX",
 ) -> None:
     """Wire minimal web routes that adapt HTTP input/output to shared schemas."""
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
-        return _render_page()
+        return _render_page(assistant_name=assistant_name)
 
     @app.post("/chat", response_class=HTMLResponse)
     async def chat(request: Request) -> str:
@@ -39,7 +40,11 @@ def attach_web_routes(
                     "recoverable": True,
                 },
             )
-            return _render_page(input_text="", output=empty_response)
+            return _render_page(
+                input_text="",
+                output=empty_response,
+                assistant_name=assistant_name,
+            )
 
         input_message = InputMessage(
             text=normalized_text,
@@ -47,13 +52,18 @@ def attach_web_routes(
             interface="web",
         )
         output_message = orchestrator.process(input_message)
-        return _render_page(input_text=normalized_text, output=output_message)
+        return _render_page(
+            input_text=normalized_text,
+            output=output_message,
+            assistant_name=assistant_name,
+        )
 
 
 def _render_page(
     *,
     input_text: str = "",
     output: OutputMessage | None = None,
+    assistant_name: str = "CORTEX",
 ) -> str:
     escaped_input = escape(input_text, quote=False)
     rendered_output = ""
@@ -81,11 +91,11 @@ def _render_page(
         "<head>\n"
         "  <meta charset=\"utf-8\" />\n"
         "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n"
-        "  <title>JARVIS</title>\n"
+        f"  <title>{escape(assistant_name, quote=False)}</title>\n"
         "</head>\n"
         "<body>\n"
         "  <main>\n"
-        "    <h1>JARVIS Local Web</h1>\n"
+        f"    <h1>{escape(assistant_name, quote=False)} Local Web</h1>\n"
         "    <form method=\"post\" action=\"/chat\">\n"
         "      <label for=\"text\">Message</label>\n"
         f"      <input id=\"text\" name=\"text\" type=\"text\" value=\"{escaped_input}\" />\n"
@@ -96,3 +106,4 @@ def _render_page(
         "</body>\n"
         "</html>\n"
     )
+
