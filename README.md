@@ -1,8 +1,7 @@
 # Cortex
 
-Aplicação bilíngue de análise de automobilismo: Next.js/React/TypeScript no
+Aplicação de análise de automobilismo: Next.js/React/TypeScript no
 frontend, FastAPI/FastF1 no backend e tipos gerados de Pydantic/OpenAPI.
-Português é o idioma inicial.
 
 ## Estado atual
 
