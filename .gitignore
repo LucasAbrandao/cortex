@@ -1,0 +1,31 @@
+# Dependencies and generated outputs
+node_modules/
+.cache-uv-cortex/
+.next/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Python environments, tooling and caches
+.venv/
+**/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local configuration and data
+.env
+.env.local
+.env.*.local
+!.env.example
+data/
+uploads/
+fastf1-cache/
+normalized-cache/
+
+# OS/editor files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+{
+  "name": "@cortex/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cortex/contracts": "0.0.0",
+    "@react-three/fiber": "^9.7.0",
+    "@types/three": "^0.185.4",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "three": "^0.185.1"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "cortex",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "npm@11.7.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@cortex/web",
+    "build": "npm run build --workspace=@cortex/contracts && npm run build --workspace=@cortex/web",
+    "lint": "eslint . && uv run --directory services/api ruff check .",
+    "typecheck": "npm run typecheck --workspace=@cortex/contracts && npm run typecheck --workspace=@cortex/web && uv run --directory services/api mypy",
+    "test:web": "npm run test --workspace=@cortex/web",
+    "test:api": "uv run --directory services/api pytest",
+    "contracts:generate": "uv run --directory services/api python scripts/export_openapi.py && openapi-typescript services/api/openapi.json -o packages/contracts/src/generated/openapi.ts",
+    "contracts:check": "npm run contracts:generate && git diff --exit-code -- services/api/openapi.json packages/contracts/src/generated/openapi.ts",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "eslint": "10.8.1",
+    "jsdom": "29.0.1",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

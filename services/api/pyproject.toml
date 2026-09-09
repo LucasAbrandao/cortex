@@ -1,0 +1,32 @@
+[project]
+name = "cortex-api"
+version = "0.0.0"
+description = "Cortex local API"
+requires-python = ">=3.13,<3.15"
+dependencies = [
+  "fastapi==0.141.1",
+  "fastf1==3.8.3",
+  "pydantic==2.13.4",
+  "uvicorn==0.52.3",
+]
+
+[dependency-groups]
+dev = [
+  "httpx==0.28.1",
+  "mypy==2.3.0",
+  "pytest==9.1.1",
+  "ruff==0.16.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["app", "tests"]
