@@ -109,6 +109,14 @@ button, input, select { font-variant-numeric: tabular-nums; }
 .mobile-menu-button, .drawer-backdrop { display: none; }
 .main-content { margin-left: 72px; min-height: 100vh; transition: margin-left var(--motion-base) ease; }
 .sidebar.is-expanded ~ .main-content { margin-left: var(--sidebar-width); }
+
+@media (min-width: 768px) {
+  .sidebar:hover { width: var(--sidebar-width); }
+  .sidebar:hover .sidebar-label, .sidebar:hover .pin-button, .sidebar:hover .sidebar-section-label { opacity: 1; }
+  .sidebar:hover .locale-control select { max-width: 120px; opacity: 1; }
+  .sidebar:hover ~ .sidebar-resizer { left: calc(var(--sidebar-width) - 4px); }
+  .sidebar:hover ~ .main-content { margin-left: var(--sidebar-width); }
+}
 .content-wrap { margin: 0 auto; max-width: 1440px; padding: clamp(1.25rem, 3vw, 3.5rem); }
 .content-wrap:has(.race-explorer) { max-width: none; }
 

@@ -14,13 +14,14 @@ continuam fora do escopo. A Fase 05 não foi encerrada.
 ### Estabilização do E2E na CI — 2026-09-09
 
 O primeiro workflow no GitHub passou por lint, typecheck, testes web, build,
-Pytest e contratos, mas um cenário de sidebar falhou de forma transitória ao
-aguardar a expansão por hover. O cenário passou 10/10 vezes em repetição local
-com dois workers, sem mudança no componente. A CI agora reutiliza o build de
-produção já gerado, executa Playwright com um worker e permite uma repetição
+Pytest e contratos, mas um cenário de sidebar falhou ao aguardar a expansão por
+hover. O cenário passou 10/10 vezes em repetição local, mas voltou a falhar no
+Chromium Linux mesmo em execução serial e retry. A expansão desktop agora tem
+um fallback CSS nativo, que funciona antes da hidratação, enquanto o estado
+React continua responsável por foco, pin e persistência. A CI reutiliza o build
+de produção já gerado, executa Playwright com um worker e permite uma repetição
 com trace. Em caso de falha, `test-results` é publicado por sete dias para
-preservar o contexto e o trace. Nenhuma dependência, contrato, dado ou regra de
-interface foi alterada.
+preservar o contexto e o trace. Nenhuma dependência, contrato ou dado mudou.
 
 `PROJECT_STANDARDS.md` consolida o que levar ao restante do projeto: componentes
 canônicos, tokens, hierarquia, estados, acessibilidade, seleções independentes e
