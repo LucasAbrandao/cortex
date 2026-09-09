@@ -11,6 +11,17 @@ Telemetry Lab ainda tem seleção desabilitada e workspace placeholder. A Fase 0
 continua pendente, inclusive preview e mapeamento visual; upload backend e RCZ
 continuam fora do escopo. A Fase 05 não foi encerrada.
 
+### Estabilização do E2E na CI — 2026-09-09
+
+O primeiro workflow no GitHub passou por lint, typecheck, testes web, build,
+Pytest e contratos, mas um cenário de sidebar falhou de forma transitória ao
+aguardar a expansão por hover. O cenário passou 10/10 vezes em repetição local
+com dois workers, sem mudança no componente. A CI agora reutiliza o build de
+produção já gerado, executa Playwright com um worker e permite uma repetição
+com trace. Em caso de falha, `test-results` é publicado por sete dias para
+preservar o contexto e o trace. Nenhuma dependência, contrato, dado ou regra de
+interface foi alterada.
+
 `PROJECT_STANDARDS.md` consolida o que levar ao restante do projeto: componentes
 canônicos, tokens, hierarquia, estados, acessibilidade, seleções independentes e
 integridade dos dados. Não registra migração visual das outras telas como feita.

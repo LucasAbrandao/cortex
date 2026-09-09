@@ -3,13 +3,14 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./apps/web/e2e",
   fullyParallel: true,
+  retries: process.env.CI === "true" ? 1 : 0,
   reporter: "list",
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "on-first-retry"
   },
   webServer: {
-    command: "npm run dev --workspace=@cortex/web",
+    command: process.env.CI === "true" ? "npm run start --workspace=@cortex/web" : "npm run dev --workspace=@cortex/web",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: process.env.CI !== "true"
   },
