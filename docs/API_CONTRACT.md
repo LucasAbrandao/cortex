@@ -1,6 +1,8 @@
 # Contrato da API
 
-Base local planejada: `/api`. Todas as respostas possuem `requestId`; erros usam código estável e mensagem segura.
+Base local: `/api`. Respostas de negócio incluem `requestId`; erros tratados
+de validação e domínio usam o envelope `ApiErrorResponse` com código estável
+e mensagem segura.
 
 ## Infraestrutura
 
@@ -35,12 +37,16 @@ da allowlist `{ year: 2025, event: "Belgium", session: "R" }` retorna
 
 ### `POST /api/f1/jobs`
 
-Corpo: ano, evento e sessão. Responde `202` com `jobId`, estado e URL de consulta. Pedido não suportado retorna `422` antes de criar trabalho.
+Corpo: ano, evento e sessão. Responde `202` com `LoadJob`, identificado pelo
+campo `id`; o cliente consulta `GET /api/jobs/{id}`. A resposta não possui
+campo `jobId` nem URL de consulta. Pedido não suportado retorna `422` antes
+de criar trabalho.
 
 ### `GET /api/jobs/{jobId}`
 
 ```ts
 type LoadJob = {
+  requestId: string;
   id: string;
   status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
   stage: "catalog" | "cache" | "download" | "normalize" | "ready";
@@ -81,8 +87,33 @@ originais por piloto+volta. Cada amostra possui `time`, `lapTime`, `lapNumber`,
 na renderização quando qualquer coordenada é nula ou `onTrack` não é `true`;
 nenhuma coordenada é calculada, fundida ou interpolada pela API.
 
+Quando `selections` contém somente voltas nulas, a resposta tem segmentos
+vazios; a consulta não é ampliada para todos os pilotos. Pedido sem pilotos
+nem seleções continua retornando os segmentos disponíveis da sessão.
+
 ## Erros
 
-`INVALID_SELECTION`, `SESSION_NOT_SUPPORTED`, `JOB_NOT_FOUND`, `JOB_CANCELLED`, `UPSTREAM_UNAVAILABLE`, `RATE_LIMITED`, `CACHE_ERROR`, `NORMALIZATION_ERROR`, `AXIS_UNAVAILABLE` e `VALIDATION_ERROR`.
+```ts
+type ApiErrorResponse = {
+  requestId: string;
+  error: { code: string; message: string };
+};
+```
+
+OpenAPI declara esse mesmo modelo para `422` nos pedidos com parâmetros ou
+corpo e para `404` nas consultas de jobs e sessões. `422` inclui
+`SESSION_NOT_SUPPORTED`, `INVALID_SELECTION`, `AXIS_UNAVAILABLE` e
+`VALIDATION_ERROR`; job inexistente usa `404`/`JOB_NOT_FOUND` e sessão ausente
+no processo usa `404`/`VALIDATION_ERROR`.
+
+Falhas assíncronas de carga aparecem em `LoadJob.error`, após polling, com
+`UPSTREAM_UNAVAILABLE`, `RATE_LIMITED`, `CACHE_ERROR` ou `NORMALIZATION_ERROR`.
+Cancelamento é o estado `cancelled`, não um erro HTTP `JOB_CANCELLED`.
+
+O cliente TypeScript lança `ApiRequestError`, mantendo a mensagem genérica
+`API_REQUEST_UNAVAILABLE` e expondo `status`, `code` e `requestId`. Sem resposta
+HTTP, `status` é `null`; com envelope inválido ou não JSON, `code` e
+`requestId` são `null`. Mensagens e corpos brutos não são incorporados ao erro
+do cliente.
 
 Exceções internas, caminhos, respostas brutas e segredos nunca chegam ao cliente.

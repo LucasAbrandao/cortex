@@ -1,97 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 
-import { createApiClient, type LoadJob } from "@cortex/contracts";
+import { createApiClient } from "@cortex/contracts";
 
-import { StatePanel, type VisualState } from "../../shared/state-panel";
+import { StatePanel } from "../../shared/state-panel";
 import { useCortex } from "../navigation/app-shell";
 import { RaceStage } from "../race-explorer/race-stage";
 import { RaceExplorerScreen } from "../race-explorer/race-explorer-screen";
-
-type LoadState = "initial" | "ready" | "cancelled" | Exclude<VisualState, "warning" | "unavailable">;
+import { useSessionLoad } from "./use-session-load";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api";
 
 export function SessionLoadScreen() {
   const { t, locale } = useCortex();
   const api = useMemo(() => createApiClient(apiBaseUrl), []);
-  const [state, setState] = useState<LoadState>("initial");
-  const [job, setJob] = useState<LoadJob | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startedAt = useRef<number | null>(null);
-
-  const clearPolling = useCallback(() => {
-    if (pollTimer.current !== null) {
-      clearTimeout(pollTimer.current);
-      pollTimer.current = null;
-    }
-  }, []);
-
-  const applyJob = useCallback((nextJob: LoadJob) => {
-    setJob(nextJob);
-    if (nextJob.status === "succeeded") {
-      setState("ready");
-    } else if (nextJob.status === "cancelled") {
-      setState("cancelled");
-    } else if (nextJob.status === "failed") {
-      setState("error");
-    }
-  }, []);
-
-  const poll = useCallback(async (jobId: string) => {
-    try {
-      const nextJob = await api.getJob(jobId);
-      applyJob(nextJob);
-      if (nextJob.status === "queued" || nextJob.status === "running") {
-        pollTimer.current = setTimeout(() => void poll(jobId), 650);
-      }
-    } catch {
-      setState("error");
-    }
-  }, [api, applyJob]);
-
-  const start = useCallback(async () => {
-    clearPolling();
-    startedAt.current = Date.now();
-    setElapsedSeconds(0);
-    setJob(null);
-    setState("loading");
-    try {
-      const created = await api.createJob({ year: 2025, event: "Belgium", session: "R" });
-      applyJob(created);
-      if (created.status === "queued" || created.status === "running") {
-        void poll(created.id);
-      }
-    } catch {
-      setState("error");
-    }
-  }, [api, applyJob, clearPolling, poll]);
-
-  const cancel = useCallback(async () => {
-    clearPolling();
-    if (job !== null) {
-      try {
-        applyJob(await api.cancelJob(job.id));
-      } catch {
-        setState("error");
-        return;
-      }
-    }
-    setState("cancelled");
-  }, [api, applyJob, clearPolling, job]);
-
-  useEffect(() => {
-    if (state !== "loading" || startedAt.current === null) return;
-    const interval = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - (startedAt.current ?? Date.now())) / 1000));
-    }, 250);
-    return () => clearInterval(interval);
-  }, [state]);
-
-  useEffect(() => clearPolling, [clearPolling]);
+  const { state, job, elapsedSeconds, start, cancel } = useSessionLoad(api);
 
   const description = {
     initial: t.sessionInitial,

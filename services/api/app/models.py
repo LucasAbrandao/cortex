@@ -81,6 +81,11 @@ class ApiError(ApiModel):
     message: str
 
 
+class ApiErrorResponse(ApiModel):
+    request_id: str = Field(alias="requestId")
+    error: ApiError
+
+
 class LoadJob(ApiModel):
     request_id: str = Field(alias="requestId")
     id: str

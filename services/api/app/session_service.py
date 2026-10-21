@@ -141,7 +141,7 @@ class SessionService:
         segments: list[TrackSegment] = []
         for key, samples in session.tracks.items():
             driver, lap = _split_series_key(key)
-            if (allowed_selections and key in allowed_selections) or (not allowed_selections and driver in allowed_drivers):
+            if key in allowed_selections or (not request.selections and driver in allowed_drivers):
                 segments.append(TrackSegment(driver=driver, lap=lap, samples=list(samples)))
         return segments
 

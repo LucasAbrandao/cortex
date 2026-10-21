@@ -16,6 +16,29 @@ function setup() {
 }
 
 describe("Race companion", () => {
+  it("pauses when focus changes and preserves the global replay cursor", async () => {
+    setup();
+    await screen.findByRole("heading", { name: "Race Explorer · Spa 2025" });
+    fireEvent.change(screen.getByRole("slider", { name: "Posição do replay" }), { target: { value: "59" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reproduzir" }));
+    expect(screen.getByRole("button", { name: "Pausar" })).toBeInTheDocument();
+    const selection = screen.getByRole("region", { name: "Seleção de pilotos" });
+    fireEvent.click(within(selection).getByRole("button", { name: "Focar NOR" }));
+    expect(screen.getByRole("button", { name: "Reproduzir" })).toBeInTheDocument();
+    expect(screen.getByTestId("race-time")).toHaveAttribute("data-time", "59");
+    expect(within(selection).getByRole("button", { name: "Focar NOR" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("pauses at the selected lap's proven start without resetting to zero", async () => {
+    setup();
+    await screen.findByRole("heading", { name: "Race Explorer · Spa 2025" });
+    fireEvent.click(screen.getByText("Opções da volta"));
+    fireEvent.click(screen.getByRole("button", { name: "Reproduzir" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Volta selecionada" }), { target: { value: "8" } });
+    expect(screen.getByRole("button", { name: "Reproduzir" })).toBeInTheDocument();
+    expect(screen.getByTestId("race-time")).toHaveAttribute("data-time", "100");
+  });
+
   it("keeps monitored drivers, focus, and comparison selections independent", async () => {
     setup();
     await screen.findByRole("heading", { name: "Race Explorer · Spa 2025" });

@@ -12,6 +12,7 @@ import { useLayoutMotion } from "../../shared/use-layout-motion";
 import { useRaceTracks } from "./use-race-tracks";
 import { TimingTower } from "./race-monitor-panels";
 import { indexTrackSamples, visualMarkersFromIndex } from "./race-track-markers";
+import { lapTimeFor, maxChannelValue, averageChannelValue, activeChannelSamples, gearChanges } from "./race-metrics";
 
 import { useRaceStage } from "./race-stage";
 import { useRaceScroll } from "./use-race-scroll";
@@ -125,11 +126,13 @@ export function RaceExplorerScreen({ sessionId }: { sessionId: string }) {
   };
   const selectFocus = (driver: string) => {
     if (!manifest) return;
+    clock.setPlaying(false);
     const lap = activeLapWindow(manifest.laps, driver, mode === "race" ? time : modeTimes.current.race)?.lap ?? firstLapFor(manifest, driver);
     setFocus({ driver, lap });
   };
   const selectLap = (lap: number) => {
     if (!manifest || !focus) return;
+    clock.setPlaying(false);
     const window = lapWindow(manifest.laps, focus.driver, lap);
     setFocus({ ...focus, lap });
     if (window && mode === "race") { seek(window.start); setFollowing(true); setInspectionRange(null); }
@@ -257,9 +260,7 @@ function Metric({ name, value, unavailable }: { name: string; value: string | nu
 function firstLapFor(manifest: Manifest, driver: string): number | null { return lapsFor(manifest, driver)[0] ?? null; }
 function lapOrFallback(manifest: Manifest, driver: string, preferred: number): number | null { return lapsFor(manifest, driver).includes(preferred) ? preferred : firstLapFor(manifest, driver); }
 function lapsFor(manifest: Manifest, driver: string): number[] { return manifest.laps.filter((lap) => lap.driver === driver && lap.number !== null).map((lap) => lap.number as number); }
-function lapTimeFor(manifest: Manifest, driver: string, lap: number | null): number | null { return manifest.laps.find((item) => item.driver === driver && item.number === lap)?.lapTime ?? null; }
 function frameAt(frames: ReplayFrame[], time: number | null): ReplayFrame | null { if (time === null || !frames.length) return null; let low = 0; let high = frames.length - 1; while (low <= high) { const middle = Math.floor((low + high) / 2); if ((frames[middle]?.time ?? Infinity) <= time) low = middle + 1; else high = middle - 1; } return frames[high] ?? null; }
-function chartValue(value: unknown): number | null { if (typeof value === "boolean") return value ? 1 : 0; return typeof value === "number" && Number.isFinite(value) ? value : null; }
 function formatComparisonClock(value: number, locale: string): string { return `${String(Math.floor(value / 60)).padStart(2, "0")}:${formatRelativeTime(value % 60, locale)}`; }
 function formatRelativeTime(value: number, locale: string): string { return new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value); }
 function formatSessionTime(value: number, locale: string): string { const hours = Math.floor(value / 3600); const minutes = Math.floor(value % 3600 / 60); const seconds = Math.floor(value % 60); const two = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false }); return `${two.format(hours)}:${two.format(minutes)}:${two.format(seconds)}`; }
@@ -267,11 +268,6 @@ function formatSeconds(value: number | null, locale: string): string | null { re
 function formatSpeed(value: number | null, locale: string): string | null { return value === null ? null : `${formatAxis(value, locale)} km/h`; }
 function formatCount(value: number | null, locale: string): string | null { return value === null ? null : new Intl.NumberFormat(locale).format(value); }
 function formatDelta(value: number | null, base: number | null, locale: string): string | null { return value === null || base === null ? null : `${value >= base ? "+" : ""}${formatRelativeTime(value - base, locale)} s`; }
-function channelValues(series: Series, channel: string): number[] { return series.samples.map((sample) => chartValue(sample.values[channel])).filter((value): value is number => value !== null); }
-function maxChannelValue(series: Series, channel: string): number | null { const values = channelValues(series, channel); return values.length ? Math.max(...values) : null; }
-function averageChannelValue(series: Series, channel: string): number | null { const values = channelValues(series, channel); return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null; }
-function activeChannelSamples(series: Series, channel: string): number | null { const values = channelValues(series, channel); return values.length ? values.filter((value) => value > 0).length : null; }
-function gearChanges(series: Series): number | null { const values = channelValues(series, "gear"); return values.length ? values.slice(1).filter((value, index) => value !== values[index]).length : null; }
 function markerPositions(segments: TrackSegment[], drivers: string[], time: number): Array<{ driver: string; x: number; y: number }> { return drivers.flatMap((driver) => { const marker = markerPositionFor(segments.filter((segment) => segment.driver === driver), time); return marker ? [{ driver, ...marker }] : []; }); }
 function comparisonMarkers(segments: TrackSegment[], comparisons: Comparison[], manifest: Manifest, time: number): Array<{ driver: string; x: number; y: number }> { return comparisons.flatMap((comparison) => { const window = lapWindow(manifest.laps, comparison.driver, comparison.lap); if (!window || time > window.duration) return []; const marker = markerPositionFor(segments.filter((segment) => segment.driver === comparison.driver && segment.lap === comparison.lap), window.start + time); return marker ? [{ driver: comparison.driver, ...marker }] : []; }); }
 function boundsFor(points: Array<{ x: number | null; y: number | null }>): { minX: number; maxX: number; minY: number; maxY: number; width: number; height: number } | null { const valid = points.filter((point): point is { x: number; y: number } => point.x !== null && point.y !== null); if (!valid.length) return null; const rawMinX = Math.min(...valid.map((point) => point.x)); const rawMaxX = Math.max(...valid.map((point) => point.x)); const rawMinY = Math.min(...valid.map((point) => point.y)); const rawMaxY = Math.max(...valid.map((point) => point.y)); const extent = Math.max(rawMaxX - rawMinX, rawMaxY - rawMinY) * 1.12 || 1; const centerX = (rawMinX + rawMaxX) / 2; const centerY = (rawMinY + rawMaxY) / 2; return { minX: centerX - extent / 2, maxX: centerX + extent / 2, minY: centerY - extent / 2, maxY: centerY + extent / 2, width: 1000, height: 1000 }; }

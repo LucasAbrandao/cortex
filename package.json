@@ -8,14 +8,16 @@
     "packages/*"
   ],
   "scripts": {
+    "check": "npm run check:core && npm run e2e -- --workers=1",
+    "check:core": "npm run lint && npm run typecheck && npm run test:web && npm run test:api && npm run contracts:check && npm run build",
     "dev:web": "npm run dev --workspace=@cortex/web",
     "build": "npm run build --workspace=@cortex/contracts && npm run build --workspace=@cortex/web",
-    "lint": "eslint . && uv run --directory services/api ruff check .",
-    "typecheck": "npm run typecheck --workspace=@cortex/contracts && npm run typecheck --workspace=@cortex/web && uv run --directory services/api mypy",
+    "lint": "eslint . && uv run --directory services/api --frozen ruff check .",
+    "typecheck": "npm run typecheck --workspace=@cortex/contracts && npm run typecheck --workspace=@cortex/web && uv run --directory services/api --frozen mypy",
     "test:web": "npm run test --workspace=@cortex/web",
-    "test:api": "uv run --directory services/api pytest",
-    "contracts:generate": "uv run --directory services/api python scripts/export_openapi.py && openapi-typescript services/api/openapi.json -o packages/contracts/src/generated/openapi.ts",
-    "contracts:check": "npm run contracts:generate && git diff --exit-code -- services/api/openapi.json packages/contracts/src/generated/openapi.ts",
+    "test:api": "uv run --directory services/api --frozen pytest",
+    "contracts:generate": "uv run --directory services/api --frozen python scripts/export_openapi.py && openapi-typescript services/api/openapi.json -o packages/contracts/src/generated/openapi.ts",
+    "contracts:check": "node scripts/check-contracts.mjs",
     "e2e": "playwright test"
   },
   "devDependencies": {
@@ -29,6 +31,7 @@
     "jsdom": "29.0.1",
     "openapi-typescript": "7.13.0",
     "typescript": "5.9.3",
-    "vitest": "4.1.10"
+    "typescript-eslint": "8.71.2",
+    "vitest": "4.1.11"
   }
 }

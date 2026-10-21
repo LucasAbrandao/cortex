@@ -99,17 +99,23 @@ class JobManager:
                 record.message = "Loading was cancelled."
         except CortexError as error:
             with self._lock:
+                if record.cancelled.is_set():
+                    return
                 record.status = "failed"
                 record.error = ApiError(code=error.code, message=error.message)
                 record.message = error.message
         except Exception:  # noqa: BLE001
             with self._lock:
+                if record.cancelled.is_set():
+                    return
                 record.status = "failed"
                 record.error = ApiError(code="NORMALIZATION_ERROR", message="The session could not be normalized safely.")
                 record.message = record.error.message
         finally:
             with self._lock:
-                self._active_by_selection.pop((record.year, record.event, record.session), None)
+                selection = (record.year, record.event, record.session)
+                if self._active_by_selection.get(selection) == record.id:
+                    self._active_by_selection.pop(selection)
 
     @staticmethod
     def _to_model(record: JobRecord, request_id: str) -> LoadJob:

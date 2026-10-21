@@ -1,5 +1,9 @@
 # Critérios de aceite
 
+Estes critérios definem o fechamento das entregas. O estado aprovado e as
+evidências datadas pertencem a `STATUS.md`; a presença de um critério não
+significa que já foi validado.
+
 ## Fase 00
 
 - Projeto anterior preservado e novo repositório identificado sem ambiguidade.
@@ -16,8 +20,8 @@
 ## Fase 02
 
 - Calendário 2025 visível e apenas Spa Race habilitada.
-- Primeira carga real usa FastF1; carga repetida informa cache.
-- Job exibe estágio, permite cancelamento e não duplica trabalho idêntico.
+- Carga real usa FastF1 com cache nativo habilitado. Uma repetição com artefato normalizado válido informa `normalized-cache`; quando a origem individual não é comprovável, informa `null` sem inferir rede/cache nativo.
+- Job exibe estágio, permite cancelamento e não duplica trabalho idêntico. Cancelamento seguido de retry não perde a tentativa nova nem permite que resposta obsoleta restaure a interface.
 - Manifesto, replay e séries validam contra o contrato.
 
 ## Fase 03
@@ -28,19 +32,25 @@
 - Volta 7 de A e volta 9 de B podem ser comparadas por tempo de volta.
 - Distância só habilita quando todas as séries suportam.
 - Ausência interrompe gráfico e mostra motivo.
+- Amostras inválidas permanecem barreiras na pista; voltas consecutivas só conservam movimento estimado quando a adjacência e os limites de tempo/salto permitem.
+- Monitoramento e comparação reutilizam séries da janela corrente; preparação da próxima volta não cria requisições por frame.
 
 ## Fase 04
 
 - CSV/JSON pode ser selecionado ou arrastado e recebe preview limitado.
+- Limites de bytes/amostra são explícitos; extensão inválida, excesso de tamanho, vazio e JSON malformado recebem orientação.
 - Mapeamento exige tempo e canal numérico.
 - Fixture inválida produz orientação; fixture válida abre workspace.
 - Banner deixa claro que a normalização do upload ainda é demonstrativa.
+- Conteúdo não é enviado, persistido ou registrado; estado é descartado ao sair ou reiniciar a importação.
 
 ## Fase 05
 
 - Todos os gates passam em ambiente limpo e GitHub Actions.
-- Smoke Spa real passa separadamente e registra rede/cache.
-- Browser verificado em três larguras, teclado e movimento reduzido.
+- Smoke Spa real passa separadamente e registra duração, tamanho e origem observável (`normalized-cache` ou `null`); não apresenta rede/cache nativo como identificados por inferência.
+- Browser verificado em 1440, 1200, 1024 e 390 px, PT/EN, teclado e movimento reduzido.
+- `contracts:check` passa sem alterar artefatos versionados; falha quando estão desatualizados, independentemente do índice Git.
+- Memória, bundle e atualização de gráficos têm medições registradas antes de qualquer alegação de ganho de performance.
 - Documentação e status descrevem exatamente o comportamento entregue.
 
 ## Aceite global
