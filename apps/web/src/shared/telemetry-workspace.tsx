@@ -17,6 +17,12 @@ export const telemetryColor = (driver: string) => {
 const valueOf = (value: unknown): number | null => typeof value === "boolean" ? Number(value) : typeof value === "number" && Number.isFinite(value) ? value : null;
 const sampleTime = (sample: Series["samples"][number], axis: TelemetryAxis) => axis === "globalTime" ? sample.time : sample.lapTime;
 const format = (value: unknown, locale: string) => value === null || value === undefined ? "—" : typeof value === "number" ? new Intl.NumberFormat(locale, { maximumFractionDigits: 3 }).format(value) : String(value);
+const availabilityLabel = (series: Series, pt: boolean) => {
+  const labels = pt
+    ? { available: "Disponível", partial: "Parcial", absent: "Ausente", unmapped: "Não mapeado", uncalibrated: "Não calibrado" }
+    : { available: "Available", partial: "Partial", absent: "Absent", unmapped: "Unmapped", uncalibrated: "Uncalibrated" };
+  return `${labels[series.availability.status]}${series.availability.reason ? ` · ${series.availability.reason}` : ""}`;
+};
 
 type Props = {
   series: Series[]; channels: Channel[]; axis: TelemetryAxis; cursor: number | null;
@@ -33,6 +39,9 @@ export function TelemetryWorkspace(props: Props) {
   const stack = useRef<HTMLDivElement>(null);
   useLayoutMotion(stack, visible.join("|"));
   return <div className="telemetry-workspace">
+    {props.series.some((item) => item.availability.status !== "available") && <ul className="inline-notice" aria-label={pt ? "Disponibilidade das séries" : "Series availability"}>
+      {props.series.filter((item) => item.availability.status !== "available").map((item) => <li key={`${item.driver}:${item.lap}`}>{item.driver}{item.lap !== null ? ` · ${item.lap}` : ""}: {availabilityLabel(item, pt)}</li>)}
+    </ul>}
     <details className="channel-menu">
       <summary>{pt ? "Canais de telemetria" : "Telemetry channels"}<span>{visible.length} / {channels.length}</span></summary>
       <fieldset className="channel-options"><legend className="sr-only">{pt ? "Canais visíveis" : "Visible channels"}</legend>
@@ -124,7 +133,7 @@ export function TelemetryTable(props: Props) {
   const selected = props.channels.find((item) => item.id === channel) ?? props.channels[0];
   return <details className="telemetry-table-wrap"><summary><h3>{pt ? "Tabela de amostras no instante" : "Samples at this instant"}</h3></summary>
     <label className="compact-control">{pt ? "Canal da tabela" : "Table channel"}<select value={selected?.id ?? ""} onChange={(event) => setChannel(event.target.value)}>{props.channels.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-    <div><table><thead><tr><th>{pt ? "Piloto" : "Driver"}</th><th>{pt ? "Volta" : "Lap"}</th><th>{pt ? "Tempo da amostra" : "Sample time"}</th><th>{selected?.label} {selected?.unit}</th></tr></thead><tbody>{currentSamples(props).map((row) => <tr key={row.key}><th scope="row">{row.driver}</th><td>{row.sample?.lapNumber ?? row.lap ?? "—"}</td><td>{format(row.sample ? sampleTime(row.sample, props.axis) : null, props.locale)}</td><td>{format(selected ? row.sample?.values[selected.id] : null, props.locale)}</td></tr>)}</tbody></table></div>
+    <div><table><thead><tr><th>{pt ? "Piloto" : "Driver"}</th><th>{pt ? "Volta" : "Lap"}</th><th>{pt ? "Tempo da amostra" : "Sample time"}</th><th>{selected?.label} {selected?.unit}</th><th>{pt ? "Disponibilidade" : "Availability"}</th></tr></thead><tbody>{currentSamples(props).map((row) => <tr key={row.key}><th scope="row">{row.driver}</th><td>{row.sample?.lapNumber ?? row.lap ?? "—"}</td><td>{format(row.sample ? sampleTime(row.sample, props.axis) : null, props.locale)}</td><td>{format(selected ? row.sample?.values[selected.id] : null, props.locale)}</td><td>{props.series.filter((item) => item.driver === row.driver && (props.axis === "globalTime" || item.lap === row.lap)).map((item) => availabilityLabel(item, pt)).filter((value, index, items) => items.indexOf(value) === index).join("; ")}</td></tr>)}</tbody></table></div>
     <p className="muted">{pt ? "Última amostra original até o cursor, com no máximo 2 s de idade. Lacunas permanecem ausentes." : "Last original sample at or before the cursor, at most 2 s old. Gaps remain missing."}</p>
   </details>;
 }

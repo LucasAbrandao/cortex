@@ -1,4 +1,14 @@
-# Status vigente — 2026-10-13
+# Status vigente — 2026-10-20
+
+## Entrega funcional — revisão 1 de 3
+
+- Branch `codex/functional-delivery`; trabalho anterior preservado no commit `0342e16`.
+- Paleta: comandos explícitos PT/EN, rodapé traduzido, foco contido no diálogo e restaurado ao fechar. Idioma não altera a fixação da sidebar.
+- Workspace compartilhado expõe disponibilidade e motivo das séries, inclusive na tabela; valores zero e ausências permanecem distintos.
+- `npm run check` **passou**: lint, tipos, contratos, build, **85 testes web, 33 API e 20 E2E**. O CSS ausente detectado na primeira integração foi incluído e a cadeia completa repetida. Smoke real continua separado.
+- Importação real em andamento. A seção abaixo preserva o estado da retomada anterior; os marcos atuais serão consolidados ao concluir a entrega.
+
+## Retomada anterior — 2026-10-13
 
 Este arquivo é o ponto de retomada. O [histórico completo até 2026-09-09](history/STATUS_2026-09-09.md) preserva entregas, comandos e limitações das rodadas anteriores; seus resultados não substituem a validação atual.
 
