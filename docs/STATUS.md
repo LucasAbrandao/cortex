@@ -21,8 +21,12 @@
    proteção contra respostas antigas e descarte. `npm run check` passou com
    **137 testes web, 33 API e 28 E2E**, incluindo os dois módulos. Contratos,
    lint, tipos e build passaram. Smoke real permanece opt-in separado.
-3. **Em validação:** inspeção visual final, medição de desempenho, smoke Spa
-   real e entrega GitHub/CI. Resultados serão registrados ao terminar.
+3. **Entregue:** revisão independente de código e imagens, smoke Spa real e
+   medição com 50 mil registros/500 mil células. Branch publicada e
+   [PR de revisão #1](https://github.com/LucasAbrandao/cortex/pull/1), sem merge
+   na principal ou deploy. A primeira
+   [CI de integração passou](https://github.com/LucasAbrandao/cortex/actions/runs/39522427390);
+   os checks da revisão final ficam vinculados ao PR.
 
 ## Evidências e limites
 
@@ -31,12 +35,18 @@
   erros, privacidade e descarte por reset/navegação/reload.
 - PT/EN e larguras 1440/1200/1024/390 passaram; teclado e redução de movimento
   foram exercitados. Capturas/artefatos permanecem ignorados pelo Git.
-- A preparação da sessão real pela API passou em **20,70 s**, com
-  `source: normalized-cache`, sessão `2025-belgium-r-2-6`. Isso ainda não substitui
-  o smoke de navegador real e não representa carga fria.
+- Smoke de navegador real **passou em produção**: sessão `2025-belgium-r-2-6`,
+  **20 pilotos/879 voltas**, `source: normalized-cache`, quatro larguras e zero
+  erros de página/console. Carga até manifesto **44,09 s**; manifesto **70.324 bytes**.
+- Medição em produção **passou**: inspeção **748 ms**, análise **1.182 ms** e
+  cursor com mediana **50 ms** (automação + dois frames). Contexto, memória,
+  bundle e limitações em `PERFORMANCE.md`; nenhuma alegação de ganho ou FPS.
+- Verificação final completa: **137 testes web, 33 API e 28 E2E determinísticos**;
+  os dois cenários opt-in também passaram separadamente. Contratos, lint, tipos
+  e build sincronizados. A inspeção final corrigiu contraste do botão de reset.
 - Avisos conhecidos: certificado Conda, depreciação TestClient/THREE.Clock e
   cores do terminal. Nenhum gate foi ignorado. Sem medição de FPS ou hardware móvel.
 
-Detalhes: `TELEMETRY_IMPORT_REQUIREMENTS.md`, `TESTING.md`, `DECISIONS.md` e
+Detalhes: `TELEMETRY_IMPORT_REQUIREMENTS.md`, `TESTING.md`, `PERFORMANCE.md`, `DECISIONS.md` e
 `DATA_CONTRACT.md`. O [status anterior](history/STATUS_2026-10-13.md) e o
 [histórico até setembro](history/STATUS_2026-09-09.md) preservam a retomada.

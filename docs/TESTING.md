@@ -51,6 +51,12 @@ real já carregada em cache.
 
 Esse cenário verifica a sessão real em cache; não prova uma carga fria nem identifica hit/miss do cache nativo. Uma validação fria separada deve registrar duração, tamanho e apenas a origem observável, preservando `source: null` quando rede e cache nativo não puderem ser distinguidos.
 
+`performance.spec.ts` é opt-in por `CORTEX_PERF_SMOKE=1`; mede um arquivo
+controlado de 50 mil registros e registra leitura, análise, cursor, heap da
+página e bytes JavaScript observados. Procedimento e limites em `PERFORMANCE.md`.
+Assim como o smoke real, fica separado da CI obrigatória e não impõe limites
+de tempo dependentes de hardware às regressões determinísticas.
+
 ## Contratos
 
 `npm run contracts:generate` atualiza OpenAPI e TypeScript dos modelos Pydantic.
