@@ -51,9 +51,9 @@ sem inferir ultrapassagens por GPS. Não há sincronização automática com TV.
 ## Aplicação nas próximas entregas
 
 Home e catálogo devem adotar hierarquia, tokens e estados conforme sua jornada.
-Telemetry Lab deve reutilizar gráficos e tabela canônicos ao implementar a
-Fase 04, com banner persistente de fixture. Hoje não há preview, mapeamento ou
-workspace de importação funcional. Backend de upload, RCZ, outras corridas,
+Telemetry Lab reutiliza gráficos e tabela canônicos na importação real local
+de D-020. Preview, mapeamento e sessão usam o arquivo escolhido, com aviso de
+privacidade e descarte ao sair. Backend de upload, RCZ, outras corridas,
 autenticação e publicação continuam fora desse escopo.
 
 Cada adaptação deve registrar o que foi entregue, testar os estados e conferir

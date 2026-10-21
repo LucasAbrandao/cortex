@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, Query, Request
@@ -13,6 +14,7 @@ from .fastf1_adapter import FastF1Adapter, FastF1Backend
 from .jobs import JobManager
 from .models import (
     ApiError,
+    ApiErrorResponse,
     CacheHealth,
     CapabilitiesResponse,
     CapabilitySession,
@@ -31,6 +33,10 @@ from .models import (
 )
 from .session_service import SessionService
 from .settings import Settings
+
+
+def _error_responses(*status_codes: int) -> dict[int | str, dict[str, Any]]:
+    return {status_code: {"model": ApiErrorResponse} for status_code in status_codes}
 
 
 def create_app(settings: Settings | None = None, adapter: FastF1Backend | None = None) -> FastAPI:
@@ -53,22 +59,22 @@ def create_app(settings: Settings | None = None, adapter: FastF1Backend | None =
     async def handle_cortex_error(_: Request, error: CortexError) -> JSONResponse:
         return JSONResponse(
             status_code=error.status_code,
-            content={
-                "requestId": str(uuid4()),
-                "error": ApiError(code=error.code, message=error.message).model_dump(by_alias=True),
-            },
+            content=ApiErrorResponse(
+                requestId=str(uuid4()),
+                error=ApiError(code=error.code, message=error.message),
+            ).model_dump(by_alias=True),
         )
 
     @application.exception_handler(RequestValidationError)
     async def handle_validation_error(_: Request, __: RequestValidationError) -> JSONResponse:
         return JSONResponse(
             status_code=422,
-            content={
-                "requestId": str(uuid4()),
-                "error": ApiError(
+            content=ApiErrorResponse(
+                requestId=str(uuid4()),
+                error=ApiError(
                     code="VALIDATION_ERROR", message="The request does not match the public API contract."
-                ).model_dump(by_alias=True),
-            },
+                ),
+            ).model_dump(by_alias=True),
         )
 
     @application.get("/api/health", response_model=HealthResponse, tags=["infrastructure"])
@@ -114,27 +120,40 @@ def create_app(settings: Settings | None = None, adapter: FastF1Backend | None =
             sessions=[SessionSummary(session="R", label="Race", availability="enabled")],
         )
 
-    @application.post("/api/f1/jobs", response_model=LoadJob, status_code=202, tags=["jobs"])
+    @application.post(
+        "/api/f1/jobs", response_model=LoadJob, status_code=202,
+        responses=_error_responses(422), tags=["jobs"],
+    )
     def create_job(request: JobRequest) -> LoadJob:
         if not is_supported(request.year, request.event, request.session):
             raise CortexError("SESSION_NOT_SUPPORTED", "Only Belgium 2025 Race is enabled.", 422)
         return jobs.create(request.year, request.event, request.session, str(uuid4()))
 
-    @application.get("/api/jobs/{job_id}", response_model=LoadJob, tags=["jobs"])
+    @application.get(
+        "/api/jobs/{job_id}", response_model=LoadJob,
+        responses=_error_responses(404, 422), tags=["jobs"],
+    )
     def job_status(job_id: str) -> LoadJob:
         return jobs.get(job_id, str(uuid4()))
 
-    @application.delete("/api/jobs/{job_id}", response_model=LoadJob, tags=["jobs"])
+    @application.delete(
+        "/api/jobs/{job_id}", response_model=LoadJob,
+        responses=_error_responses(404, 422), tags=["jobs"],
+    )
     def cancel_job(job_id: str) -> LoadJob:
         return jobs.cancel(job_id, str(uuid4()))
 
     @application.get(
-        "/api/f1/sessions/{session_id}/manifest", response_model=SessionManifestResponse, tags=["sessions"]
+        "/api/f1/sessions/{session_id}/manifest", response_model=SessionManifestResponse,
+        responses=_error_responses(404, 422), tags=["sessions"],
     )
     def manifest(session_id: str) -> SessionManifestResponse:
         return SessionManifestResponse(requestId=str(uuid4()), manifest=sessions.get(session_id).manifest)
 
-    @application.get("/api/f1/sessions/{session_id}/replay", response_model=ReplayResponse, tags=["sessions"])
+    @application.get(
+        "/api/f1/sessions/{session_id}/replay", response_model=ReplayResponse,
+        responses=_error_responses(404, 422), tags=["sessions"],
+    )
     def replay(
         session_id: str,
         from_: float | None = Query(default=None, alias="from"),
@@ -145,13 +164,15 @@ def create_app(settings: Settings | None = None, adapter: FastF1Backend | None =
         return ReplayResponse(requestId=str(uuid4()), sessionId=session_id, frames=selected)
 
     @application.post(
-        "/api/f1/sessions/{session_id}/series", response_model=SeriesResponse, tags=["sessions"]
+        "/api/f1/sessions/{session_id}/series", response_model=SeriesResponse,
+        responses=_error_responses(404, 422), tags=["sessions"],
     )
     def series(session_id: str, request: SeriesRequest) -> SeriesResponse:
         return SeriesResponse(requestId=str(uuid4()), sessionId=session_id, series=sessions.series(session_id, request))
 
     @application.post(
-        "/api/f1/sessions/{session_id}/track", response_model=TrackResponse, tags=["sessions"]
+        "/api/f1/sessions/{session_id}/track", response_model=TrackResponse,
+        responses=_error_responses(404, 422), tags=["sessions"],
     )
     def track(session_id: str, request: TrackRequest) -> TrackResponse:
         session = sessions.get(session_id)

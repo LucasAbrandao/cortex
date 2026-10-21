@@ -17,7 +17,12 @@ services/api
 FastF1 e fontes públicas
 ```
 
-O Telemetry Lab do protótipo lê apenas amostras locais para preview visual; sua futura normalização deverá entrar por um adaptador e produzir o mesmo contrato.
+O Telemetry Lab usa um worker nativo para ler, validar e normalizar CSV/JSON reais
+em memória no navegador (D-020). Um provider no layout do módulo mantém o estado
+efêmero entre inspeção e análise; saída, reset ou reload descartam tudo. Séries,
+canais e amostras usam os tipos canônicos gerados; `ImportedTelemetrySession`
+contém apenas metadados específicos da fonte local. Não há envio, endpoint de
+upload ou persistência. FastF1/Pandas/RCZ continuam fora do navegador.
 
 ## Monorepo
 
@@ -30,6 +35,11 @@ O Telemetry Lab do protótipo lê apenas amostras locais para preview visual; su
 ## Fonte de verdade
 
 Pydantic define respostas e erros; FastAPI expõe OpenAPI; um script determinístico gera TypeScript. Não manter tipos públicos manualmente em dois idiomas.
+
+`ApiErrorResponse` publica o envelope de erro com código e request ID. O cliente
+TypeScript o valida antes de expor `ApiRequestError`, preservando status, código
+e request ID disponíveis. `contracts:check` gera saídas temporárias e compara
+com os artefatos presentes, sem alterá-los ou exigir que estejam preparados no Git.
 
 ## Fluxo FastF1
 
@@ -44,8 +54,9 @@ Pydantic define respostas e erros; FastAPI expõe OpenAPI; um script determinís
 
 - Jobs possuem estados discriminados e cancelamento cooperativo.
 - Requisições idênticas em andamento compartilham o mesmo trabalho, sem iniciar downloads duplicados.
-- Metadados do job ficam em memória e expiram; cache público tem ciclo separado.
-- O protótipo usa polling com backoff limitado; transporte em tempo real fica adiado.
+- Cancelar um job não permite que sua conclusão remova o registro ativo de uma nova tentativa da mesma seleção.
+- Metadados do job ficam em memória durante a vida do processo; não há expiração automática implementada. O cache público tem ciclo separado.
+- `useSessionLoad` controla cada tentativa e ignora respostas obsoletas. O polling começa em 650 ms e cresce até 2,5 s; cancelar ou sair invalida a tentativa e limpa seu timer. Transporte em tempo real fica adiado.
 
 ## Dependências futuras
 

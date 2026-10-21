@@ -13,7 +13,7 @@ class Settings:
     normalized_cache_dir: Path
     allowed_origins: tuple[str, ...]
     schema_version: str = "2"
-    normalizer_version: str = "5"
+    normalizer_version: str = "6"
 
     @classmethod
     def from_environment(cls) -> Settings:

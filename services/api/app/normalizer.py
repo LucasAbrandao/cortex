@@ -125,8 +125,10 @@ def _telemetry_series(
 
     series: dict[str, tuple[TelemetrySample, ...]] = {}
     for summary in laps:
-        if should_cancel() or summary.number is None or not summary.driver:
+        if should_cancel():
             break
+        if summary.number is None or not summary.driver:
+            continue
         samples = _lap_samples(raw_laps, summary)
         series[_series_key(summary.driver, summary.number)] = tuple(samples)
     return series
@@ -141,8 +143,10 @@ def _track_series(
 
     tracks: dict[str, tuple[TelemetryTrackSample, ...]] = {}
     for summary in laps:
-        if should_cancel() or summary.number is None or not summary.driver:
+        if should_cancel():
             break
+        if summary.number is None or not summary.driver:
+            continue
         samples = _lap_track_samples(raw_laps, summary)
         tracks[_series_key(summary.driver, summary.number)] = tuple(samples)
     return tracks

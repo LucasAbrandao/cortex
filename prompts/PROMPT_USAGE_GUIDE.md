@@ -1,19 +1,19 @@
 # Guia de uso dos prompts
 
-> Retomada em 2026-09-09: fases 00–03 já implementadas. Leia primeiro
-> `docs/STATUS.md`, `docs/DECISIONS.md` e `docs/PROJECT_STANDARDS.md`.
-> Prompts dessas fases são históricos; não recrie o repositório nem restaure
-> comportamentos substituídos por D-018/D-019. Fase 04 permanece pendente.
+> Leia primeiro `docs/STATUS.md`, `docs/DECISIONS.md` e
+> `docs/PROJECT_STANDARDS.md`. O status vigente define a retomada.
+> Prompts das fases concluídas são históricos; não recrie o repositório nem
+> restaure comportamentos substituídos por D-018/D-019.
 
 
 ## Preparação
 
-Use um agente com acesso ao ambiente local. Forneça o caminho do kit, do Cortex atual e do `telemetryCortex`. Comece pelo prompt mestre e pela Fase 00.
+Use um agente com acesso ao ambiente local e informe o caminho do Cortex atual. Leia o status e inspecione scripts e mudanças locais antes de escolher o prompt da próxima entrega. O prompt mestre fornece o método; seus comandos de reconstrução e os prompts de fundação não devem ser executados novamente em uma retomada. Referências ao projeto anterior servem apenas para consulta autorizada.
 
 ## Sequência
 
 1. Cole ou referencie `MASTER_IMPLEMENTATION_PROMPT.md`.
-2. Execute apenas o prompt da fase atual.
+2. Execute apenas o prompt da entrega indicada pelo status vigente; a próxima jornada de produto é a importação visual da Fase 04.
 3. Responda às aprovações de dependências e ações destrutivas.
 4. Revise diff, evidências e `STATUS.md`.
 5. Autorize a próxima fase somente após o aceite.

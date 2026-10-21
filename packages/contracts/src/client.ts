@@ -1,5 +1,6 @@
 import type { components, paths } from "./generated/openapi";
 
+export type ApiErrorResponse = components["schemas"]["ApiErrorResponse"];
 export type HealthResponse = paths["/api/health"]["get"]["responses"]["200"]["content"]["application/json"];
 export type JobRequest = components["schemas"]["JobRequest"];
 export type LoadJob = components["schemas"]["LoadJob"];
@@ -10,12 +11,56 @@ export type SeriesResponse = paths["/api/f1/sessions/{session_id}/series"]["post
 export type TrackRequest = components["schemas"]["TrackRequest"];
 export type TrackResponse = paths["/api/f1/sessions/{session_id}/track"]["post"]["responses"]["200"]["content"]["application/json"];
 
-const request = async <Response>(url: string, init?: RequestInit): Promise<Response> => {
-  const response = await fetch(url, init);
-  if (!response.ok) {
-    throw new Error("API_REQUEST_UNAVAILABLE");
+export class ApiRequestError extends Error {
+  readonly status: number | null;
+  readonly code: string | null;
+  readonly requestId: string | null;
+
+  constructor(status: number | null, details: ApiErrorResponse | null = null) {
+    super("API_REQUEST_UNAVAILABLE");
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = details?.error.code ?? null;
+    this.requestId = details?.requestId ?? null;
   }
-  return (await response.json()) as Response;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const parseErrorResponse = (value: unknown): ApiErrorResponse | null => {
+  if (!isRecord(value) || Object.keys(value).length !== 2 || typeof value.requestId !== "string") {
+    return null;
+  }
+  const details = value.error;
+  if (!isRecord(details) || Object.keys(details).length !== 2 ||
+      typeof details.code !== "string" || typeof details.message !== "string") {
+    return null;
+  }
+  return { requestId: value.requestId, error: { code: details.code, message: details.message } };
+};
+
+const request = async <Result>(url: string, init?: RequestInit): Promise<Result> => {
+  let response: Response;
+  try {
+    response = await fetch(url, init);
+  } catch {
+    throw new ApiRequestError(null);
+  }
+  if (!response.ok) {
+    let details: ApiErrorResponse | null = null;
+    try {
+      details = parseErrorResponse(await response.json());
+    } catch {
+      // A proxy or failed upstream may return a non-JSON body.
+    }
+    throw new ApiRequestError(response.status, details);
+  }
+  try {
+    return (await response.json()) as Result;
+  } catch {
+    throw new ApiRequestError(response.status);
+  }
 };
 
 export const createApiClient = (baseUrl: string) => ({

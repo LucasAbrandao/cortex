@@ -37,6 +37,22 @@ describe("Race Explorer time model", () => {
       { time: 10.2, x: 5000, y: 0, onTrack: true }
     ], 10.1)).toBeNull();
   });
+  it.each([
+    { name: "gap", before: { time: 10, x: 0, y: 0, onTrack: true }, after: { time: 12, x: 100, y: 0, onTrack: true }, between: 11 },
+    { name: "implausible jump", before: { time: 10, x: 0, y: 0, onTrack: true }, after: { time: 10.2, x: 5000, y: 0, onTrack: true }, between: 10.1 },
+    { name: "backward timestamp", before: { time: 10, x: 0, y: 0, onTrack: true }, after: { time: 9.8, x: 100, y: 0, onTrack: true }, between: 9.9 }
+  ])("preserves an exact original position after a $name without estimating across it", ({ before, after, between }) => {
+    const samples = [before, after];
+    expect(visualTrackPosition(samples, between)).toBeNull();
+    expect(visualTrackPosition(samples, after.time)).toEqual({ x: after.x, y: after.y, heading: 0, estimated: false });
+  });
+
+  it("retains the proven transition heading at an exact original endpoint", () => {
+    expect(visualTrackPosition([
+      { time: 10, x: 0, y: 0, onTrack: true },
+      { time: 10.5, x: 100, y: 100, onTrack: true }
+    ], 10.5)).toEqual({ x: 100, y: 100, heading: Math.PI / 4, estimated: false });
+  });
   it("orders only recorded positions", () => {
     expect(orderByPosition([{ driver: "PIA", position: 2 }, { driver: "NOR", position: 1 }, { driver: "LEC", position: null }]).map((row) => row.driver)).toEqual(["NOR", "PIA", "LEC"]);
   });

@@ -64,6 +64,51 @@ describe("app shell", () => {
     expect(screen.queryByRole("dialog", { name: "Paleta de comandos" })).not.toBeInTheDocument();
     expect(screen.queryByText("⌘ K")).not.toBeInTheDocument();
   });
+
+  it("changes language through palette commands without changing sidebar pinning", async () => {
+    render(<AppShell><p>Content</p></AppShell>);
+
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    const search = screen.getByRole("textbox", { name: "Paleta de comandos" });
+    await waitFor(() => expect(search).toHaveFocus());
+    fireEvent.change(search, { target: { value: "english" } });
+    fireEvent.keyDown(search, { key: "Enter" });
+
+    expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pin sidebar" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pin sidebar" }));
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    const dialog = screen.getByRole("dialog", { name: "Command palette" });
+    expect(dialog.querySelector("footer")).toHaveTextContent("navigate");
+    expect(dialog.querySelector("footer")).toHaveTextContent("open");
+    expect(dialog.querySelector("footer")).toHaveTextContent("close");
+    fireEvent.click(within(dialog).getByRole("button", { name: /Português.*Language/ }));
+    expect(screen.getByRole("navigation", { name: "Navegação principal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Liberar barra lateral" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps keyboard focus inside the palette and restores its trigger on Escape", async () => {
+    render(<AppShell><p>Content</p></AppShell>);
+    const trigger = screen.getAllByRole("button", { name: /Abrir paleta de comandos/ })[0]!;
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Paleta de comandos" });
+    const input = within(dialog).getByRole("textbox");
+    const buttons = within(dialog).getAllByRole("button");
+    const last = buttons[buttons.length - 1]!;
+    await waitFor(() => expect(input).toHaveFocus());
+
+    fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
+    expect(last).toHaveFocus();
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(input).toHaveFocus();
+    last.focus();
+    fireEvent.keyDown(last, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });
 
 describe("catalog and session states", () => {

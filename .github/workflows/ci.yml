@@ -16,14 +16,11 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: 0.12.4
+          python-version: "3.13"
+      - run: npm install --global npm@11.7.0
       - run: npm ci
-      - run: uv sync --directory services/api --all-groups
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test:web
-      - run: npm run build
-      - run: npm run test:api
-      - run: npm run contracts:check
+      - run: uv sync --directory services/api --all-groups --frozen
+      - run: npm run check:core
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e -- --workers=1
       - name: Upload Playwright diagnostics

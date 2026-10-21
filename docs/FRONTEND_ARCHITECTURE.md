@@ -10,8 +10,8 @@ Next.js App Router, React, TypeScript estrito e CSS com tokens do produto. Depen
 - `/f1`: ano, evento e sessão.
 - `/f1/2025/belgium/race`: carregamento e Race Explorer.
 - `/telemetry`: entrada do laboratório.
-- `/telemetry/import`: fluxo visual de importação.
-- `/telemetry/session`: workspace com fixture.
+- `/telemetry/import`: seleção/arraste CSV/JSON, inspeção e mapeamento confirmado.
+- `/telemetry/session`: análise real local, com gráficos/tabela compartilhados.
 
 Layout raiz fornece idioma e shell. Áreas que dependem de browser, Three.js, upload, replay ou ResizeObserver são Client Components isolados. Conteúdo estático e catálogos iniciais podem ser Server Components; não transformar toda a árvore em cliente.
 
@@ -31,15 +31,15 @@ de negócio.
 
 - `features/navigation`: shell, sidebar e idioma.
 - `features/f1-catalog`: seletores e disponibilidade.
-- `features/session-load`: job, polling, cancelamento e retry.
+- `features/session-load`: `useSessionLoad` controla job, polling progressivo, cancelamento e retry com proteção contra respostas tardias.
 - `features/race-explorer`: relógio, caches por volta, cena 3D, classificação e análise.
-- `features/telemetry`: rotas de laboratório e placeholders; importação ainda desabilitada.
+- `features/telemetry`: parser/normalizador em worker cancelável, provider efêmero e telas de importação/análise (D-020).
 - `shared/telemetry-workspace.tsx`: gráficos e tabela canônicos reutilizáveis.
 - `shared`: controles, estados, formatação e cliente gerado.
 
 ## Estado
 
-Dados remotos pertencem à camada de consultas. Estado efêmero complexo do workspace usa reducer/store com ações explícitas:
+Dados remotos pertencem à camada de consultas. Estado efêmero do workspace fica nos hooks e componentes; suas ações representam:
 
 ```text
 focusDriver, monitorDriver, addComparison, selectChannels,
@@ -53,17 +53,31 @@ Não duplicar payload remoto inteiro na store. URL guarda somente seleção nave
 
 Um relógio de replay é fonte do `cursorTime`. Hover de gráfico pode pausar/atualizar cursor conforme modo explícito. Atualização visual usa `requestAnimationFrame`; não dispara requisição por frame. Mudança de volta restaura enquadramento padrão, salvo quando o usuário fixa zoom.
 
-No Race Explorer, hooks especializados separam relógio, cache de séries por
-piloto+volta, cache incremental de pista e estado de apresentação. Manifesto e
-frames permanecem imutáveis fora destes caches. Corrida real deriva as voltas
-ativas do tempo global e prepara a volta seguinte sem requisitar por frame;
-comparação usa tempo relativo e nunca aparenta que os carros dividiram o mesmo
-instante. Gráfico e tabela reutilizáveis vivem em `shared` e recebem apenas o
-modelo canônico, permitindo uso posterior pelo Telemetry Lab.
+No Race Explorer, hooks especializados separam relógio, cache incremental de
+pista e estado de apresentação. `useRaceLapCache` centraliza o mecanismo usado
+por séries e pista; cada recurso e contexto mantém seus dados próprios, retendo
+a janela solicitada e as próximas voltas selecionadas pelo consumidor.
+Manifesto e frames permanecem imutáveis.
+Corrida real deriva as voltas ativas do tempo global e prepara a volta seguinte
+sem requisitar por frame; comparação usa tempo relativo e nunca aparenta que os
+carros dividiram o mesmo instante. Gráfico e tabela reutilizáveis vivem em
+`shared` e recebem o modelo canônico, reutilizado pelo Telemetry Lab.
+
+Na análise de arquivos, `staticData` mantém a curva completa enquanto o cursor
+inspeciona amostras originais. Cada entidade/volta permanece uma série na tabela.
+`telemetry-display.ts` centraliza eixos, elegibilidade da distância e segmentos;
+lacunas são temporais mesmo no eixo em metros. Geometria estática é memorizada.
+
+`race-metrics.ts` concentra métricas de amostras, separadas da apresentação.
+`indexTrackSamples` ordena blocos sem reorganizar as amostras internas: ausência
+ou timestamp inválido continua uma barreira. Fronteiras de voltas consecutivas
+com adjacência comprovada podem conservar a estimativa visual, sujeita aos
+limites de tempo e salto de `visualTrackPosition`; lacunas, sobreposição ou
+voltas desconhecidas/não consecutivas não autorizam conexão entre blocos.
 
 ## Erros e estados
 
-Boundary por rota, painéis reutilizáveis e mensagens localizadas. Erro de um canal não derruba replay. Controles indisponíveis preservam explicação acessível.
+Painéis reutilizáveis e mensagens localizadas tratam os estados conhecidos. Não há boundary de erro dedicado por rota implementado. Erro de um canal não deve derrubar replay; controles indisponíveis preservam explicação acessível. Cobertura e validação atuais ficam em `STATUS.md`.
 
 ## Performance
 

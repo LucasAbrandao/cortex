@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -12,7 +13,9 @@ from app.main import app
 
 
 def main() -> None:
-    output = API_ROOT / "openapi.json"
+    parser = argparse.ArgumentParser(description="Export the API's deterministic OpenAPI schema.")
+    parser.add_argument("--output", type=Path, default=API_ROOT / "openapi.json")
+    output = parser.parse_args().output
     output.write_text(
         json.dumps(app.openapi(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

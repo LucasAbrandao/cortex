@@ -67,7 +67,7 @@ test("scroll keeps the wide scene visible, makes charts solid and restores the t
 });
 
 test("slow loading and cancellation do not turn the illustrative scene into session data", async ({ page }) => {
-  await page.route("**/api/**", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ requestId: "slow", id: "slow", status: route.request().url().endsWith("/cancel") ? "cancelled" : "running", stage: "cache", progress: null, message: "Loading", source: null, sessionId: null, error: null }) }));
+  await page.route("**/api/**", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ requestId: "slow", id: "slow", status: route.request().method() === "DELETE" ? "cancelled" : "running", stage: "cache", progress: null, message: "Loading", source: null, sessionId: null, error: null }) }));
   await page.goto(url);
   await page.getByRole("button", { name: "Carregar sessão real" }).click();
   await expect(page.getByRole("button", { name: "Cancelar", exact: true })).toBeVisible();
@@ -75,6 +75,52 @@ test("slow loading and cancellation do not turn the illustrative scene into sess
   await expect(page.getByTestId("race-time")).toHaveCount(0);
   await page.getByRole("button", { name: "Cancelar", exact: true }).click();
   await expect(page.getByRole("button", { name: "Tentar novamente" })).toBeVisible();
+});
+
+test("repeated cancellation waits for a delayed creation before loading a fresh session", async ({ page }) => {
+  let releaseCreation!: () => void;
+  const delayedCreation = new Promise<void>((resolve) => { releaseCreation = resolve; });
+  const events: string[] = [];
+  let creations = 0;
+  await page.route("**/api/**", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && request.url().endsWith("/f1/jobs")) {
+      creations += 1;
+      events.push(`create ${creations}`);
+      if (creations === 1) {
+        await delayedCreation;
+        await route.fulfill({ contentType: "application/json", body: JSON.stringify({
+          requestId: "delayed", id: "delayed", status: "running", stage: "cache", progress: null,
+          message: "Loading", source: null, sessionId: null, error: null
+        }) });
+        return;
+      }
+    }
+    if (request.method() === "DELETE") {
+      events.push("cancel first");
+      await route.fulfill({ contentType: "application/json", body: JSON.stringify({
+        requestId: "cancelled", id: "delayed", status: "cancelled", stage: "cache", progress: null,
+        message: "Cancelled", source: null, sessionId: null, error: null
+      }) });
+      return;
+    }
+    await route.fulfill({ contentType: "application/json", body: JSON.stringify(fixtureResponse(request.url(), request.postDataJSON() ?? undefined)) });
+  });
+  try {
+    await page.goto(url);
+    await page.getByRole("button", { name: "Carregar sessão real" }).click();
+    await expect.poll(() => creations).toBe(1);
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Tentar novamente" }).click();
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Tentar novamente" }).click();
+    expect(creations).toBe(1);
+    releaseCreation();
+    await expect(page.getByRole("heading", { name: "Race Explorer · Spa 2025" })).toBeVisible();
+    expect(events).toEqual(["create 1", "cancel first", "create 2"]);
+  } finally {
+    releaseCreation();
+  }
 });
 
 test("missing real positions never fall back to illustrative cars", async ({ page }) => {

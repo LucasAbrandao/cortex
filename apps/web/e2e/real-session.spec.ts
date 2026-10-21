@@ -1,14 +1,31 @@
 import { expect, test } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 
 // Explicit opt-in: required CI scenarios never call FastF1 or the local backend.
 test("real cached Spa session follows laps and renders four viewport layouts", async ({ page }, testInfo) => {
   test.skip(process.env.CORTEX_REAL_SMOKE !== "1", "Explicit local cached-session smoke only");
   test.setTimeout(90000);
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/f1/2025/belgium/race");
   const manifestResponse = page.waitForResponse((response) => response.url().endsWith("/manifest") && response.ok());
+  const succeededJob = page.waitForResponse(async (response) => response.url().includes("/api/jobs/") && response.ok()
+    && (await response.json()).status === "succeeded");
+  const started = Date.now();
   await page.getByRole("button", { name: "Carregar sessão real" }).click();
-  const { manifest } = await (await manifestResponse).json();
+  const packet = await manifestResponse;
+  const { manifest } = await packet.json();
+  const completedJob = await (await succeededJob).json();
+  expect(completedJob.source).toBe("normalized-cache");
+  const evidencePath = testInfo.outputPath("session-evidence.json");
+  await writeFile(evidencePath, JSON.stringify({
+    sessionId: manifest.sessionId, normalizerVersion: manifest.normalizerVersion,
+    drivers: manifest.drivers.length, laps: manifest.laps.length, source: completedJob.source,
+    loadToManifestMs: Date.now() - started, manifestBytes: (await packet.body()).byteLength
+  }, null, 2));
+  await testInfo.attach("session-evidence", { contentType: "application/json", path: evidencePath });
   await expect(page.getByRole("heading", { name: "Race Explorer · Spa 2025" })).toBeVisible();
   await expect(page.getByRole("img", { name: /Simulação tridimensional|Traçado real/ })).toBeVisible();
   await page.getByRole("button", { name: "Selecionar todos" }).click();
@@ -43,4 +60,5 @@ test("real cached Spa session follows laps and renders four viewport layouts", a
     await page.screenshot({ path: testInfo.outputPath(`real-${viewport.width}-telemetry.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
   }
+  expect(browserErrors).toEqual([]);
 });

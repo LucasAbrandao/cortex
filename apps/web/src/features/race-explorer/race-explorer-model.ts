@@ -97,14 +97,13 @@ export function visualTrackPosition(samples: TrackPoint[], time: number): Visual
   let previous: { time: number; x: number; y: number; onTrack: true } | null = null;
   for (const sample of samples) {
     if (!validTrackPoint(sample)) { previous = null; continue; }
-    if (previous === null) {
+    if (previous === null || sample.time <= previous.time) {
       if (sample.time === time) return { x: sample.x, y: sample.y, heading: 0, estimated: false };
       previous = sample;
       continue;
     }
     const start = previous.time;
     const end = sample.time;
-    if (end <= start) { previous = sample; continue; }
     const duration = end - start;
     const dx = sample.x - previous.x;
     const dy = sample.y - previous.y;
@@ -119,6 +118,8 @@ export function visualTrackPosition(samples: TrackPoint[], time: number): Visual
         estimated: progress > 0 && progress < 1
       };
     }
+    // A rejected interval prevents estimation, not its valid original endpoint.
+    if (sample.time === time) return { x: sample.x, y: sample.y, heading: 0, estimated: false };
     previous = sample;
   }
   return null;
