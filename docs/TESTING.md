@@ -40,7 +40,7 @@ Fixtures pequenas e adaptadores controlados substituem FastF1 na suíte obrigat�
 2. Monitorar quatro pilotos, cruzar uma volta, alternar canais e validar cursor.
 3. Cancelar e tentar novamente.
 4. API offline e upstream limitado.
-5. Home → Telemetry → fixture → preview → mapeamento → workspace demo.
+5. Home → Telemetry → CSV/JSON controlado → preview → mapeamento confirmado → análise dos valores reais.
 6. Cena integrada/ampliada, exploração/fixação/restauração da câmera, suspensão fora da viewport; teclado e redução de movimento.
 7. 1440×900, 1200×900, 1024×800 e 390×844, em português e inglês; 1366×768 pode complementar a verificação do desktop.
 
@@ -68,7 +68,13 @@ quando correspondem ao schema. Validar também fixtures contra schemas públicos
 
 ESLint verifica TypeScript/TSX; Ruff e Mypy verificam Python. A CI configura as
 versões documentadas no README e usa lockfiles, incluindo `uv --frozen`.
-A jornada completa de importação depende da Fase 04. Registrar resultados em
+Importação usa `telemetry-import.spec.ts`: arquivos reais controlados, valores,
+PT/EN, quatro larguras, comparação por distância/tempo relativo, limites e
+descarte. O provider é exercitado com workers controláveis para provar cancelamento,
+retry, substituição e rejeição de respostas antigas. No modo dev, o banco interno
+`__next_debug_channel` pertence ao inspetor Next, não à importação; a verificação
+recusa outros bancos e exige localStorage/sessionStorage vazios e zero chamadas API.
+Registrar resultados em
 `STATUS.md`, sem transformar scripts existentes ou regressões focadas em prova
 de aprovação de toda a rodada.
 

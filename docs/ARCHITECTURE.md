@@ -17,7 +17,12 @@ services/api
 FastF1 e fontes públicas
 ```
 
-O preview local do Telemetry Lab é uma entrega planejada da Fase 04. Quando implementado, lerá apenas uma amostra limitada no navegador; a análise demonstrativa usará uma fixture canônica identificada. A futura normalização real deverá entrar por um adaptador e produzir o mesmo contrato. O estado entregue está em `STATUS.md`.
+O Telemetry Lab usa um worker nativo para ler, validar e normalizar CSV/JSON reais
+em memória no navegador (D-020). Um provider no layout do módulo mantém o estado
+efêmero entre inspeção e análise; saída, reset ou reload descartam tudo. Séries,
+canais e amostras usam os tipos canônicos gerados; `ImportedTelemetrySession`
+contém apenas metadados específicos da fonte local. Não há envio, endpoint de
+upload ou persistência. FastF1/Pandas/RCZ continuam fora do navegador.
 
 ## Monorepo
 

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { SeriesResponse, SessionManifestResponse } from "@cortex/contracts";
-import { TelemetryWorkspace } from "./telemetry-workspace";
+import { TelemetryWorkspace, telemetryColor } from "./telemetry-workspace";
 
 afterEach(cleanup);
 const channels: SessionManifestResponse["manifest"]["channels"] = [{ id: "speed", label: "Speed", unit: "km/h", valueType: "continuous", origin: "source", suggestedView: "line" }];
@@ -21,5 +21,24 @@ describe("shared telemetry workspace", () => {
     expect(screen.getByRole("list", { name: "Series availability" })).toHaveTextContent("Uncalibrated · No calibration");
     expect(screen.getByRole("table")).toHaveTextContent("—");
     expect(screen.getByText("No samples in this interval")).toBeInTheDocument();
+  });
+  it("renders the full static import beyond its inspection cursor and draws isolated samples", () => {
+    const data = [{ ...series[0]!, samples: [0, 1, 4].map((time) => ({ time, lapTime: time, lapNumber: null, distance: time * 100, values: { speed: time } })) }];
+    const { container } = render(<TelemetryWorkspace {...props} series={data} staticData />);
+    expect(container.querySelector(".monitor-series-path")?.getAttribute("d")).toContain("L");
+    expect(container.querySelectorAll("svg circle")).toHaveLength(1);
+  });
+  it("labels distance in meters and treats arbitrary entity names as identifiers", () => {
+    render(<TelemetryWorkspace {...props} axis="distance" entityLabel="Entidade" />);
+    expect(screen.getByRole("columnheader", { name: "Distância da amostra (m)" })).toBeInTheDocument();
+    expect(telemetryColor("__proto__")).toMatch(/^#[A-Fa-f0-9]{6}$/);
+    expect(telemetryColor("constructor")).toMatch(/^#[A-Fa-f0-9]{6}$/);
+  });
+  it("keeps two imported laps of one entity as separate table rows", () => {
+    render(<TelemetryWorkspace {...props} staticData series={[series[0]!, { ...series[0]!, lap: 8, availability: { status: "absent", reason: "Lap 8 unavailable", validSamples: 0, totalSamples: 0 }, samples: [] }]} />);
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).not.toHaveTextContent("Lap 8 unavailable");
+    expect(rows[2]).toHaveTextContent("Lap 8 unavailable");
   });
 });

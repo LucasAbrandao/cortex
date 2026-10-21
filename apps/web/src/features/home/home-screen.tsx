@@ -28,7 +28,7 @@ export function HomeScreen() {
           <Link className="text-link" href="/f1">{t.exploreRace} <span aria-hidden="true">→</span></Link>
         </article>
         <article className="module-card module-card-telemetry mission-secondary">
-          <StatusBadge tone="planned">{t.planned}</StatusBadge>
+          <StatusBadge tone="ready">{t.availableNow}</StatusBadge>
           <span className="module-icon"><Icon name="telemetry" /></span>
           <h2>{t.telemetryCardTitle}</h2>
           <p>{t.telemetryCardBody}</p>

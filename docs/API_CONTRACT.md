@@ -4,6 +4,10 @@ Base local: `/api`. Respostas de negócio incluem `requestId`; erros tratados
 de validação e domínio usam o envelope `ApiErrorResponse` com código estável
 e mensagem segura.
 
+Telemetry Lab (D-020) não possui endpoint de upload. Seu adaptador CSV/JSON roda
+no worker local e reutiliza os tipos canônicos gerados de canais/amostras/séries;
+nenhum arquivo ou metadado privado é enviado à API FastF1.
+
 ## Infraestrutura
 
 ### `GET /api/health`

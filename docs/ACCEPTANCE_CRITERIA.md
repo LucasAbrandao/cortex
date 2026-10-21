@@ -40,8 +40,9 @@ significa que já foi validado.
 - CSV/JSON pode ser selecionado ou arrastado e recebe preview limitado.
 - Limites de bytes/amostra são explícitos; extensão inválida, excesso de tamanho, vazio e JSON malformado recebem orientação.
 - Mapeamento exige tempo e canal numérico.
-- Fixture inválida produz orientação; fixture válida abre workspace.
-- Banner deixa claro que a normalização do upload ainda é demonstrativa.
+- Arquivo inválido produz orientação; arquivo válido abre análise dos seus próprios valores, sem fallback para fixture.
+- Unidades e base temporal exigem confirmação; valores conhecidos coincidem com gráficos/tabela e ausências permanecem visíveis.
+- Comparação limita quatro séries e distância exige validade em todas; cancelar/trocar arquivo ignora respostas antigas.
 - Conteúdo não é enviado, persistido ou registrado; estado é descartado ao sair ou reiniciar a importação.
 
 ## Fase 05

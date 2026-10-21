@@ -8,8 +8,8 @@ Português é o idioma inicial.
 
 Consulte [docs/STATUS.md](docs/STATUS.md) para o estado vigente, a próxima
 entrega e as evidências. O Race Explorer é o módulo para a sessão real de
-Belgium/Spa 2025; o Telemetry Lab é a jornada de importação visual planejada
-para a Fase 04. O [histórico](docs/history/STATUS_2026-09-09.md) preserva os
+Belgium/Spa 2025; o Telemetry Lab importa e analisa CSV/JSON reais localmente,
+com mapeamento confirmado e sem persistência. O [histórico](docs/history/STATUS_2026-09-09.md) preserva os
 resultados das rodadas anteriores.
 
 ## Ambiente reproduzível
@@ -125,7 +125,7 @@ Para executar o core e depois o E2E determinístico com um worker, use
 - `docs/DECISIONS.md`: decisões e precedência das evoluções.
 - `docs/PROJECT_STANDARDS.md`: padrões do Race Explorer para o restante do projeto.
 - `docs/RACE_EXPLORER_REQUIREMENTS.md`: comportamento atual do módulo.
-- `docs/TELEMETRY_IMPORT_REQUIREMENTS.md`: escopo futuro da Fase 04.
+- `docs/TELEMETRY_IMPORT_REQUIREMENTS.md`: formatos, limites e análise real local.
 - `docs/DATA_CONTRACT.md` e `docs/API_CONTRACT.md`: integridade e API.
 
 `apps/web`, `services/api`, `packages/contracts`, `fixtures`, `docs` e `prompts`

@@ -5,7 +5,7 @@
 `STATUS.md` é a fonte de estado vigente, prioridades e evidências. Este roadmap
 define o escopo das fases; `PROJECT_STANDARDS.md` orienta os padrões compartilhados
 e `ACCEPTANCE_CRITERIA.md` define as condições de aceite. A próxima jornada de
-produto é a Fase 04, após fechar a estabilização da retomada; não reinicializar
+produto evolui conforme D-020 (importação real local); não reinicializar
 as fases de fundação já registradas no histórico.
 
 ## Fase 00 — repositório e contratos
@@ -24,9 +24,12 @@ Implementar cache, catálogo 2025, Spa Race, jobs, normalização, manifest, rep
 
 Integrar mapa real, classificação, controles, piloto em foco, comparação, canais, cursor e zoom. Distância somente quando válida; cache compartilhado não altera amostras e a estimativa visual respeita barreiras e limites de continuidade.
 
-## Fase 04 — importação visual
+## Fase 04 — importação real local (D-020)
 
-Construir seleção e arraste de CSV/JSON, leitura limitada no navegador e preview seguro. Definir limites explícitos; cobrir extensão inválida, tamanho excedido, vazio e JSON malformado. Depois exigir tempo e canal numérico no mapeamento confirmado, abrir fixture canônica no workspace compartilhado e manter banner de demonstração. Descartar estado ao sair/reiniciar; não transmitir ou persistir arquivos.
+Seleção/arraste CSV/JSON, leitura limitada por bytes/registros/células, preview
+seguro e mapeamento/unidades confirmados. Worker normaliza os valores reais para
+séries canônicas compartilhadas, com comparação, cursor e zoom. Descartar estado
+ao sair/reiniciar/recarregar; não transmitir, persistir ou substituir por fixture.
 
 ## Fase 05 — qualidade
 
